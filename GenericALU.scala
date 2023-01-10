@@ -7,46 +7,50 @@ import chisel3.util._
 import chisel3.internal.firrtl.Width
 
 trait GenericNumberType[T] extends Bundle:
-  def store(a: T, b: T): Unit
-  def add(a: T, b: T): T
-  def sub(a: T, b: T): T
-  def mul(a: T, b: T): T
-  def div(a: T, b: T): T
-  def shiftLeft(a: T, b: T): T
-  def shiftRight(a: T, b: T): T
+  def :=(b: T): Unit
+  def +(b: T): T
+  def -(b: T): T
+  def *(b: T): T
+  def /(b: T): T
+  def <<(b: T): T
+  def >>(b: T): T
   def zero: T
 
 
 class UInt(val fixed_width: Width) extends GenericNumberType[UInt]:
   val operand_A = chisel3.UInt(fixed_width)
-  val operand_B = chisel3.UInt(fixed_width)
   val output = Wire(new UInt(fixed_width))
 
-  override def store(a: UInt, b: UInt): UInt = {
+  override def :=(a: UInt): UInt = {
     operand_A := a
-    operand_B := b
   }
-  override def add(): UInt = {
-    output := operand_A + operand_B
+  override def +(b: UInt): UInt = {
+    val operand_B = chisel3.UInt(fixed_width)
+    operand_B := b
+    output := operand_A + b
     output
   }
-  override def sub(): UInt = {
+  override def -(b: UInt): UInt = {
+    val operand_B = chisel3.UInt(fixed_width)
+    operand_B := b
     output := operand_A - operand_B
     output
   }
-  override def mul(): UInt = {
+  override def *(b: UInt): UInt = {
+    val operand_B = chisel3.UInt(fixed_width)
+    operand_B := b
     output := operand_A * operand_B
     output
   }
-  override def div(): UInt = {
+  override def /(b: UInt): UInt = {
     output := operand_A / operand_B
     output
   }
-  override def shiftLeft(): UInt = {
+  override def <<(b: UInt): UInt = {
     output := operand_A << operand_B
     output
   }
-  override def shiftRight(): UInt = {
+  override def >>(b: UInt): UInt = {
     output := operand_A >> operand_B
     output
   }
@@ -103,12 +107,12 @@ class GenericALU[T](val width: Width) extends chisel3.Module {
   output := op_A.store(io.op_A, io.op_B)
 
   switch(opcode) {
-    is(0.U) { output := op_A.add() }
-    is(1.U) { output := op_A.sub() }
-    is(2.U) { output := op_A.mul() }
-    is(3.U) { output := op_A.div() }
-    is(4.U) { output := op_A.shiftLeft() }
-    is(5.U) { output := op_A.shiftRight() }
+    is(0.U) { output := op_A.add(io.op_B) }
+    is(1.U) { output := op_A.sub(io.op_B) }
+    is(2.U) { output := op_A.mul(io.op_B) }
+    is(3.U) { output := op_A.div(io.op_B) }
+    is(4.U) { output := op_A.shiftLeft(io.op_B) }
+    is(5.U) { output := op_A.shiftRight(io.op_B) }
   }
 
   io.output := output
